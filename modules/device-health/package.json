@@ -1,0 +1,7 @@
+{
+  "name": "saathi-device-health",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local device thermal and process resource readings for Saathi",
+  "main": "index.ts"
+}

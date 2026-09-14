@@ -1,0 +1,61 @@
+{
+  "name": "saathi",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm test && npm run format:check"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@reduxjs/toolkit": "^2.11.0",
+    "expo": "~57.0.22",
+    "expo-build-properties": "~57.0.17",
+    "expo-constants": "~57.0.18",
+    "expo-crypto": "~57.0.3",
+    "expo-dev-client": "~57.0.19",
+    "expo-font": "~57.0.4",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-secure-store": "~57.0.4",
+    "expo-sqlite": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-blob-util": "^0.24.0",
+    "react-native-executorch": "0.10.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2",
+    "react-native-worklets": "0.10.1",
+    "react-redux": "^9.2.0",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "^4.0.0",
+    "prettier": "^3.6.0"
+  },
+  "react-native-executorch": {
+    "backends": [
+      "xnnpack"
+    ]
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
+  }
+}

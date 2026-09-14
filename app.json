@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Saathi",
+    "slug": "saathi-private-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "saathi",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.saathi.privateai",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": true
+      }
+    },
+    "android": {
+      "package": "com.saathi.privateai",
+      "allowBackup": false
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-secure-store",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          },
+          "android": {
+            "minSdkVersion": 33
+          }
+        }
+      ],
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "web": {
+      "name": "Saathi — a little less on your mind",
+      "bundler": "metro"
+    }
+  }
+}
