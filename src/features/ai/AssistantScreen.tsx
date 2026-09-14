@@ -41,7 +41,16 @@ export function AssistantScreen({
     };
   }, []);
 
-  useEffect(() => { if (!working) setMode(initialMode); }, [initialMode]);
+  useEffect(() => {
+    if (!working) {
+      setMode(initialMode);
+      setAnswer('');
+      setSources([]);
+      setError('');
+      setSaved(false);
+      setFinished(false);
+    }
+  }, [initialMode]);
 
   async function run() {
     if (working) return;

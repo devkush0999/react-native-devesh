@@ -30,7 +30,10 @@ export class LocalAIEngine {
   private session: Session | null = null;
   private busy = false;
 
-  constructor(private adapter: AIAdapter, private observer?: OperationObserver) {}
+  constructor(
+    private adapter: AIAdapter,
+    private observer?: OperationObserver,
+  ) {}
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => {
@@ -65,8 +68,10 @@ export class LocalAIEngine {
       if (!controller.signal.aborted)
         this.update({
           status: 'error',
-          error: error instanceof AIInterruptedError ? error.message :
-            'AI setup failed. Check your connection and free storage, then retry in a native development build.',
+          error:
+            error instanceof AIInterruptedError
+              ? error.message
+              : 'AI setup failed. Check your connection and free storage, then retry in a native development build.',
         });
     } finally {
       if (controller.signal.aborted)
@@ -113,8 +118,9 @@ export class LocalAIEngine {
     } finally {
       // Disposing only after send settles prevents freeing tensors during native inference.
       this.observer?.phase('releasing');
-      try { this.session?.dispose(); }
-      finally {
+      try {
+        this.session?.dispose();
+      } finally {
         this.session = null;
         this.controller = null;
         this.busy = false;

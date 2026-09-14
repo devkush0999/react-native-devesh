@@ -3,10 +3,25 @@ import { z } from 'zod';
 export const SAMPLE_INTERVAL_MS = 3000;
 export const MAX_SESSION_SAMPLES = 300;
 export const MAX_PERFORMANCE_SESSIONS = 12;
-export const performancePhaseSchema = z.enum(['baseline', 'download', 'loading', 'generating', 'releasing', 'cooldown', 'manual']);
+export const performancePhaseSchema = z.enum([
+  'baseline',
+  'download',
+  'loading',
+  'generating',
+  'releasing',
+  'cooldown',
+  'manual',
+]);
 export type PerformancePhase = z.infer<typeof performancePhaseSchema>;
 export type OperationKind = 'setup' | 'inference';
-export const outcomeSchema = z.enum(['completed', 'cancelled', 'error', 'thermal-stop', 'background', 'manual']);
+export const outcomeSchema = z.enum([
+  'completed',
+  'cancelled',
+  'error',
+  'thermal-stop',
+  'background',
+  'manual',
+]);
 export type PerformanceOutcome = z.infer<typeof outcomeSchema>;
 const nullableMetric = z.number().finite().nonnegative().nullable();
 export const nativeReadingSchema = z.object({
@@ -28,13 +43,26 @@ export const nativeReadingSchema = z.object({
   lowPowerMode: z.boolean().nullable(),
 });
 export type NativeReading = z.infer<typeof nativeReadingSchema>;
-export const thermalEventSchema = nativeReadingSchema.pick({ thermalLevel: true, thermalLabel: true, isPhysicalDevice: true });
-export const performanceSampleSchema = nativeReadingSchema.omit({ monotonicMs: true, processCpuTimeMs: true, platform: true, isPhysicalDevice: true, processorCount: true, memoryMetric: true }).extend({
-  elapsedMs: z.number().nonnegative(),
-  phase: performancePhaseSchema,
-  appCpuPercent: nullableMetric,
-  jsDelayMs: nullableMetric,
+export const thermalEventSchema = nativeReadingSchema.pick({
+  thermalLevel: true,
+  thermalLabel: true,
+  isPhysicalDevice: true,
 });
+export const performanceSampleSchema = nativeReadingSchema
+  .omit({
+    monotonicMs: true,
+    processCpuTimeMs: true,
+    platform: true,
+    isPhysicalDevice: true,
+    processorCount: true,
+    memoryMetric: true,
+  })
+  .extend({
+    elapsedMs: z.number().nonnegative(),
+    phase: performancePhaseSchema,
+    appCpuPercent: nullableMetric,
+    jsDelayMs: nullableMetric,
+  });
 export type PerformanceSample = z.infer<typeof performanceSampleSchema>;
 export const performanceSessionSchema = z.object({
   id: z.string(),
@@ -48,11 +76,13 @@ export const performanceSessionSchema = z.object({
   processorCount: z.number().int().positive(),
   samples: z.array(performanceSampleSchema).max(MAX_SESSION_SAMPLES),
   sampleCount: z.number().int().nonnegative(),
+  peakThermalLevel: z.number().int().min(0).max(6).nullable().default(null),
 });
 export type PerformanceSession = z.infer<typeof performanceSessionSchema>;
 
 export function cpuPercent(previous: NativeReading | null, current: NativeReading): number | null {
-  if (!previous || previous.processCpuTimeMs === null || current.processCpuTimeMs === null) return null;
+  if (!previous || previous.processCpuTimeMs === null || current.processCpuTimeMs === null)
+    return null;
   const elapsed = current.monotonicMs - previous.monotonicMs;
   const cpu = current.processCpuTimeMs - previous.processCpuTimeMs;
   if (elapsed < 100 || cpu < 0) return null;
@@ -60,32 +90,59 @@ export function cpuPercent(previous: NativeReading | null, current: NativeReadin
   return Math.min(current.processorCount * 100, (cpu / elapsed) * 100);
 }
 
-export function sampleReading(current: NativeReading, previous: NativeReading | null, elapsedMs: number, phase: PerformancePhase, jsDelayMs: number | null): PerformanceSample {
-  return performanceSampleSchema.parse({ ...current, elapsedMs: Math.max(0, elapsedMs), phase, appCpuPercent: cpuPercent(previous, current), jsDelayMs });
+export function sampleReading(
+  current: NativeReading,
+  previous: NativeReading | null,
+  elapsedMs: number,
+  phase: PerformancePhase,
+  jsDelayMs: number | null,
+): PerformanceSample {
+  return performanceSampleSchema.parse({
+    ...current,
+    elapsedMs: Math.max(0, elapsedMs),
+    phase,
+    appCpuPercent: cpuPercent(previous, current),
+    jsDelayMs,
+  });
 }
 
-export function appendSample(session: PerformanceSession, sample: PerformanceSample): PerformanceSession {
+export function appendSample(
+  session: PerformanceSession,
+  sample: PerformanceSample,
+): PerformanceSession {
   const samples = [...session.samples, sample];
   if (samples.length > MAX_SESSION_SAMPLES) samples.splice(1, samples.length - MAX_SESSION_SAMPLES);
-  return { ...session, samples, sampleCount: session.sampleCount + 1, durationMs: sample.elapsedMs };
+  return {
+    ...session,
+    samples,
+    sampleCount: session.sampleCount + 1,
+    durationMs: sample.elapsedMs,
+  };
 }
 
-function peak(samples: PerformanceSample[], field: 'appCpuPercent' | 'appMemoryMb' | 'batteryTemperatureC' | 'thermalLevel' | 'jsDelayMs'): number | null {
-  const values = samples.flatMap((sample) => sample[field] === null ? [] : [sample[field]]);
+function peak(
+  samples: PerformanceSample[],
+  field: 'appCpuPercent' | 'appMemoryMb' | 'batteryTemperatureC' | 'thermalLevel' | 'jsDelayMs',
+): number | null {
+  const values = samples.flatMap((sample) => (sample[field] === null ? [] : [sample[field]]));
   return values.length ? Math.max(...values) : null;
 }
 export function sessionSummary(session: PerformanceSession) {
   const batterySamples = session.samples.filter((sample) => sample.batteryPercent !== null);
   const first = batterySamples[0];
   const last = batterySamples.at(-1);
-  const batteryComparable = batterySamples.length >= 2 && session.samples.every((sample) => sample.charging === false);
+  const batteryComparable =
+    batterySamples.length >= 2 && session.samples.every((sample) => sample.charging === false);
   return {
     peakCpu: peak(session.samples, 'appCpuPercent'),
     peakMemory: peak(session.samples, 'appMemoryMb'),
     peakTemperature: peak(session.samples, 'batteryTemperatureC'),
-    worstThermal: peak(session.samples, 'thermalLevel'),
+    worstThermal: session.peakThermalLevel ?? peak(session.samples, 'thermalLevel'),
     peakDelay: peak(session.samples, 'jsDelayMs'),
-    batteryChange: batteryComparable && first?.batteryPercent != null && last?.batteryPercent != null ? last.batteryPercent - first.batteryPercent : null,
+    batteryChange:
+      batteryComparable && first?.batteryPercent != null && last?.batteryPercent != null
+        ? last.batteryPercent - first.batteryPercent
+        : null,
   };
 }
 

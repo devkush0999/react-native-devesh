@@ -17,7 +17,11 @@ import { TasksScreen } from './src/features/tasks/TasksScreen';
 import { AssistantScreen } from './src/features/ai/AssistantScreen';
 import type { AssistantMode } from './src/features/ai/prompts';
 import { SettingsScreen } from './src/features/settings/SettingsScreen';
-import { PerformancePanel, PerformanceShortcut, ThermalNotice } from './src/features/performance/PerformancePanel';
+import {
+  PerformancePanel,
+  PerformanceShortcut,
+  ThermalNotice,
+} from './src/features/performance/PerformancePanel';
 import { performanceMonitor } from './src/features/performance/monitor';
 
 type Tab = 'today' | 'notes' | 'tasks' | 'assistant' | 'settings';
@@ -71,7 +75,8 @@ function Shell() {
               saathi
             </Copy>
           </View>
-          <View style={[layout.row, { gap: 6 }]}><PerformanceShortcut onPress={() => setHealthOpen(true)} />
+          <View style={[layout.row, { gap: 6 }]}>
+            <PerformanceShortcut onPress={() => setHealthOpen(true)} />
             <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green }} />
             <Copy size={9} weight="600" style={{ color: colors.green, letterSpacing: 1.2 }}>
               {Platform.OS === 'web'
@@ -105,7 +110,7 @@ function Shell() {
         ) : (
           <>
             <ThermalNotice />
-          {storageError && (
+            {storageError && (
               <View style={{ paddingHorizontal: 24, gap: 4 }}>
                 <Notice error>{storageError}</Notice>
                 <Button
@@ -186,7 +191,9 @@ function Shell() {
           </>
         )}
       </View>
-      <Sheet visible={healthOpen} title="Device health" onClose={() => setHealthOpen(false)}><PerformancePanel /></Sheet>
+      <Sheet visible={healthOpen} title="Device health" onClose={() => setHealthOpen(false)}>
+        <PerformancePanel />
+      </Sheet>
       {noteEditor && <NoteEditor note={noteEditor.note} onClose={() => setNoteEditor(null)} />}
       {taskEditor && <TaskEditor task={taskEditor.task} onClose={() => setTaskEditor(null)} />}
       {background && Platform.OS !== 'web' && (

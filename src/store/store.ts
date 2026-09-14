@@ -10,7 +10,11 @@ import {
   type Task,
 } from '../domain/models';
 import { repository } from '../data/repository';
-import { MAX_PERFORMANCE_SESSIONS, performanceSessionSchema, type PerformanceSession } from '../domain/performance';
+import {
+  MAX_PERFORMANCE_SESSIONS,
+  performanceSessionSchema,
+  type PerformanceSession,
+} from '../domain/performance';
 
 const slice = createSlice({
   name: 'vault',
@@ -56,9 +60,14 @@ const slice = createSlice({
     },
     savePerformanceSession(state, action: PayloadAction<PerformanceSession>) {
       const session = performanceSessionSchema.parse(action.payload);
-      state.data.performanceSessions = [session, ...state.data.performanceSessions.filter((item) => item.id !== session.id)].slice(0, MAX_PERFORMANCE_SESSIONS);
+      state.data.performanceSessions = [
+        session,
+        ...state.data.performanceSessions.filter((item) => item.id !== session.id),
+      ].slice(0, MAX_PERFORMANCE_SESSIONS);
     },
-    clearPerformanceSessions(state) { state.data.performanceSessions = []; },
+    clearPerformanceSessions(state) {
+      state.data.performanceSessions = [];
+    },
     clearVault(state) {
       state.data = { ...emptySnapshot, preferences: state.data.preferences };
     },

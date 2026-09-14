@@ -54,6 +54,7 @@ describe('native AI lifecycle', () => {
     await engine.prepare();
     const request = engine.generate('system', 'question', () => {});
     const rejected = expect(request).rejects.toThrow('stopped');
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'));
     engine.cancel();
     finish(session);
     await rejected;

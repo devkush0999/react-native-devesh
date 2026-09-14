@@ -2,7 +2,15 @@ import { useSyncExternalStore } from 'react';
 import { randomUUID } from 'expo-crypto';
 import DeviceHealth from '../../../modules/device-health';
 import { actions, store } from '../../store/store';
-import { SAMPLE_INTERVAL_MS, nativeReadingSchema, thermalEventSchema, type OperationKind, type PerformanceOutcome, type PerformancePhase, type PerformanceSession } from '../../domain/performance';
+import {
+  SAMPLE_INTERVAL_MS,
+  nativeReadingSchema,
+  thermalEventSchema,
+  type OperationKind,
+  type PerformanceOutcome,
+  type PerformancePhase,
+  type PerformanceSession,
+} from '../../domain/performance';
 import { AIInterruptedError, type OperationObserver } from '../ai/engine.core';
 import { SessionRecorder } from './recorder';
 
@@ -15,8 +23,15 @@ type MonitorState = {
   thermalNotice: string | null;
 };
 
-class PerformanceMonitor implements OperationObserver {
-  private state: MonitorState = { supported: DeviceHealth !== null, recording: false, active: null, phase: 'baseline', error: null, thermalNotice: null };
+export class PerformanceMonitor implements OperationObserver {
+  private state: MonitorState = {
+    supported: DeviceHealth !== null,
+    recording: false,
+    active: null,
+    phase: 'baseline',
+    error: null,
+    thermalNotice: null,
+  };
   private listeners = new Set<() => void>();
   private recorder = new SessionRecorder();
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -32,19 +47,37 @@ class PerformanceMonitor implements OperationObserver {
   private kind: PerformanceSession['kind'] = 'manual';
   private lastOutcome: PerformanceOutcome = 'completed';
 
-  subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  };
   getSnapshot = () => this.state;
-  private update(patch: Partial<MonitorState>) { this.state = { ...this.state, ...patch }; this.listeners.forEach((listener) => listener()); }
-  setCancelAI(cancel: () => void) { this.cancelAI = cancel; }
+  private update(patch: Partial<MonitorState>) {
+    this.state = { ...this.state, ...patch };
+    this.listeners.forEach((listener) => listener());
+  }
+  setCancelAI(cancel: () => void) {
+    this.cancelAI = cancel;
+  }
 
   private onHeat(event: unknown) {
     const result = thermalEventSchema.safeParse(event);
-    if (!result.success || !result.data.isPhysicalDevice || result.data.thermalLevel === null) return;
+    if (!result.success || !result.data.isPhysicalDevice || result.data.thermalLevel === null)
+      return;
     const { thermalLevel, thermalLabel } = result.data;
+    this.recorder.observeThermal(thermalLevel);
+    this.update({ active: this.recorder.getSession() });
     if (thermalLevel >= 3) {
       const protection = store.getState().data.preferences.thermalProtection;
-      this.update({ thermalNotice: `The OS reports ${thermalLabel.toLowerCase()} thermal pressure.${protection && this.aiActive ? ' Saathi is stopping this AI request. Let the phone cool before retrying.' : ' Consider stopping AI and letting the phone cool.'}` });
-      if (protection && this.aiActive) { this.thermalStopped = true; this.cancelAI?.(); }
+      this.update({
+        thermalNotice: `The OS reports ${thermalLabel.toLowerCase()} thermal pressure.${protection && this.aiActive ? ' Saathi is stopping this AI request. Let the phone cool before retrying.' : ' Consider stopping AI and letting the phone cool.'}`,
+      });
+      if (protection && this.aiActive) {
+        this.thermalStopped = true;
+        this.cancelAI?.();
+      }
     }
   }
 
@@ -61,10 +94,18 @@ class PerformanceMonitor implements OperationObserver {
         const active = this.recorder.add(reading, delay, phase);
         this.update({ active, error: null });
       } catch {
-        if (generation === this.generation) this.update({ error: 'A device reading failed. Gaps mean unavailable data, not zero usage. Thermal protection may also be unavailable.' });
+        if (generation === this.generation)
+          this.update({
+            error:
+              'A device reading failed. Gaps mean unavailable data, not zero usage. Thermal protection may also be unavailable.',
+          });
       }
     })();
-    try { await this.pendingSample; } finally { this.pendingSample = null; }
+    try {
+      await this.pendingSample;
+    } finally {
+      this.pendingSample = null;
+    }
   }
 
   private schedule() {
@@ -73,7 +114,9 @@ class PerformanceMonitor implements OperationObserver {
     const due = performance.now() + SAMPLE_INTERVAL_MS;
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.sample(Math.max(0, performance.now() - due)).then(() => { if (generation === this.generation) this.schedule(); });
+      void this.sample(Math.max(0, performance.now() - due)).then(() => {
+        if (generation === this.generation) this.schedule();
+      });
     }, SAMPLE_INTERVAL_MS);
   }
 
@@ -85,7 +128,13 @@ class PerformanceMonitor implements OperationObserver {
     this.kind = kind;
     this.thermalStopped = false;
     this.recorder.begin(randomUUID(), kind, new Date().toISOString());
-    this.update({ recording: true, active: null, phase: 'baseline', error: null, thermalNotice: null });
+    this.update({
+      recording: true,
+      active: null,
+      phase: 'baseline',
+      error: null,
+      thermalNotice: null,
+    });
     this.initialization = (async () => {
       try {
         await this.nativeStop;
@@ -102,10 +151,16 @@ class PerformanceMonitor implements OperationObserver {
         if (generation === this.generation) this.schedule();
       } catch {
         this.finish('error');
-        this.update({ error: 'Device monitoring could not start. Rebuild the native app and retry.' });
+        this.update({
+          error: 'Device monitoring could not start. Rebuild the native app and retry.',
+        });
       }
     })();
-    try { await this.initialization; } finally { this.initialization = null; }
+    try {
+      await this.initialization;
+    } finally {
+      this.initialization = null;
+    }
   }
 
   async before(kind: OperationKind) {
@@ -116,7 +171,10 @@ class PerformanceMonitor implements OperationObserver {
     await this.initialization;
     // A fresh preflight reading is needed even inside an existing manual recording.
     await this.sample();
-    if (this.thermalStopped) throw new AIInterruptedError('AI did not start because the device reports high thermal pressure. Let it cool and retry.');
+    if (this.thermalStopped)
+      throw new AIInterruptedError(
+        'AI did not start because the device reports high thermal pressure. Let it cool and retry.',
+      );
   }
 
   phase = (phase: PerformancePhase) => {
@@ -129,7 +187,10 @@ class PerformanceMonitor implements OperationObserver {
     this.aiActive = false;
     this.lastOutcome = this.thermalStopped ? 'thermal-stop' : outcome;
     if (!this.state.recording) return;
-    if (this.kind === 'manual') { this.phase('manual'); return; }
+    if (this.kind === 'manual') {
+      this.phase('manual');
+      return;
+    }
     this.phase('cooldown');
     void this.sample();
     this.cooldown = setTimeout(() => this.finish(this.lastOutcome), 12_000);
@@ -143,20 +204,37 @@ class PerformanceMonitor implements OperationObserver {
   finish = (outcome: PerformanceOutcome = 'manual') => {
     if (this.timer) clearTimeout(this.timer);
     if (this.cooldown) clearTimeout(this.cooldown);
-    this.timer = null; this.cooldown = null;
-    this.thermalSubscription?.remove(); this.thermalSubscription = null;
+    this.timer = null;
+    this.cooldown = null;
+    this.thermalSubscription?.remove();
+    this.thermalSubscription = null;
     this.generation++;
     this.aiActive = false;
     const session = this.recorder.finish(this.thermalStopped ? 'thermal-stop' : outcome);
     this.update({ recording: false, active: null });
-    if (session?.samples.length && store.getState().hydrated) store.dispatch(actions.savePerformanceSession(session));
-    this.nativeStop = (this.initialization ?? Promise.resolve()).then(() => DeviceHealth?.stop()).catch(() => {});
+    if (session?.samples.length && store.getState().hydrated)
+      store.dispatch(actions.savePerformanceSession(session));
+    this.nativeStop = (this.initialization ?? Promise.resolve())
+      .then(() => DeviceHealth?.stop())
+      .catch(() => {});
   };
 
-  stopAndSave = () => { this.cancelAI?.(); this.finish('manual'); };
-  background = () => { this.cancelAI?.(); this.finish('background'); };
+  stopAndSave = () => {
+    this.cancelAI?.();
+    this.finish('manual');
+  };
+  background = () => {
+    this.cancelAI?.();
+    this.finish('background');
+  };
   dismissNotice = () => this.update({ thermalNotice: null });
 }
 
 export const performanceMonitor = new PerformanceMonitor();
-export function usePerformanceMonitor() { return useSyncExternalStore(performanceMonitor.subscribe, performanceMonitor.getSnapshot, performanceMonitor.getSnapshot); }
+export function usePerformanceMonitor() {
+  return useSyncExternalStore(
+    performanceMonitor.subscribe,
+    performanceMonitor.getSnapshot,
+    performanceMonitor.getSnapshot,
+  );
+}
