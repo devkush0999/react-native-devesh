@@ -2,8 +2,8 @@ node_modules/
 .expo/
 dist/
 coverage/
-ios/
-android/
+/ios/
+/android/
 .DS_Store
 *.log
 .env*

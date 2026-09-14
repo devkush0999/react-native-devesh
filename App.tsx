@@ -75,7 +75,12 @@ function Shell() {
               saathi
             </Copy>
           </View>
-          <View style={[layout.row, { gap: 6 }]}>
+          <View
+            style={[
+              layout.row,
+              { gap: 6, flexShrink: 1, flexWrap: 'wrap', justifyContent: 'flex-end' },
+            ]}
+          >
             <PerformanceShortcut onPress={() => setHealthOpen(true)} />
             <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green }} />
             <Copy size={9} weight="600" style={{ color: colors.green, letterSpacing: 1.2 }}>

@@ -32,3 +32,15 @@ These tests are release gates, not claims that they were executed in this sessio
 - Verify notification permissions are never requested: reminders are not part of this version.
 - Confirm Android backups are disabled and review iOS vault/key backup and recovery policy.
 - Verify a production build, signing, actual application IDs, model license notices and store privacy/encryption declarations before release.
+
+## Device Health Monitor
+
+- Rebuild the native app after adding the local module; a JavaScript refresh is insufficient.
+- Record idle → AI → cooldown on a real iPhone and Android phone. Verify timestamps, phase bands, CPU convention, memory definitions and missing sensor labels.
+- Open Health while generation streams. Verify the AI request continues and that returning preserves its answer.
+- Check long recordings retain the first/latest 300 samples and that graph gaps are visible.
+- Relaunch and verify completed sessions remain; verify JSON sharing excludes notes, prompts and system uptime.
+- Verify charging disables battery-change comparisons. Short sessions can legitimately show 0 percentage-point change.
+- Exercise thermal state changes through official development tools; do not overheat hardware. Verify default protection blocks/stops AI, saves the thermal-stop outcome and allows retry after cooling.
+- Verify active recording stops on background and timers/listeners do not accumulate after repeated start/stop.
+- Compare monitor-on/off runs using Instruments or Android Studio Profiler to quantify measurement overhead.

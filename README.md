@@ -9,6 +9,7 @@ A private daily companion built with React Native, Expo and **react-native-execu
 - AI task extraction: a real native ExecuTorch integration, strict JSON validation, editable suggestions and explicit save.
 - Ask your notes: local keyword retrieval selects up to four supporting notes for the model. Sources are visible. This is **keyword retrieval**, not semantic search.
 - Daily planning from open tasks and short text rewriting, with streaming responses and cancellation.
+- Device Health Monitor: automatic CPU/RAM/battery/thermal graphs during AI, manual baselines, session history and OS thermal cancellation. See [metric definitions and usage](docs/DEVICE-HEALTH.md).
 - English/Hinglish AI preference, system/light/dark appearance, accessible controls and tablet width constraints.
 - Native SQLCipher encrypted storage with a random key held by SecureStore. Browser preview uses unencrypted localStorage and says so in the interface.
 
@@ -54,10 +55,11 @@ Setup is opt-in on each app launch; subsequent setup resolves cached files. It d
 ## Verified here
 
 - TypeScript strict checks.
-- 16 automated tests for dates, persisted schema validation, task ordering, output parsing, note retrieval, cancellation, concurrency and safe native disposal.
+- 30 automated tests for dates, persisted schema validation, task ordering, output parsing, note retrieval, cancellation, concurrency and safe native disposal.
 - Expo SDK dependency compatibility check.
-- Production web export.
-- iOS development build compiled and installed successfully on an iPhone 17 Pro simulator, with the iOS JS bundle produced by Metro.
+- Production iOS, Android and web JavaScript exports.
+- Health dialog visually inspected in the browser; mobile sensor recording is disabled there.
+- iOS development build compiled and installed successfully on an iPhone 17 Pro simulator, including the local Swift Device Health module and native SVG charts, with the iOS JS bundle produced by Metro.
 
 Native model download/inference, native vault runtime behavior and mobile UI interaction **have not been end-to-end verified**. Simulator UI access was not permitted in this session. The Android SDK was not available, so an Android build has not been run. Treat the app as a working implementation that still needs device acceptance testing, not a store-ready release.
 
@@ -73,8 +75,11 @@ src/
     notes/            Notebook and thought editor
     tasks/            Planner and task editor
     ai/               Prompts, retrieval, output parser and native lifecycle
+    performance/      Native recording, thermal guard, graphs and session history
     settings/         Model setup, preferences and local data controls
   ui/                 Theme, accessible primitives and date refresh
+modules/
+  device-health/      Swift / Kotlin local Expo module
 ```
 
 ```mermaid
@@ -93,7 +98,7 @@ flowchart LR
 
 Redux Toolkit manages serializable notes/tasks/preferences. Native sessions, AbortControllers and downloaded resource handles stay outside Redux. A sequential write queue prevents older saves from overwriting newer changes and exposes failures with a retry path. Saga/React Query would add little value to this local, single-request workflow; introduce them when actual asynchronous orchestration or server state appears.
 
-The initial repository stores a versioned bounded snapshot (500 notes / 1,000 tasks) in one encrypted SQLite row. For larger datasets, migrate to normalized tables, incremental writes and SQLite FTS. The repository boundary keeps that change out of feature screens.
+The initial repository stores a versioned bounded snapshot (500 notes / 1,000 tasks / 12 health sessions) in one encrypted SQLite row. For larger datasets, migrate to normalized tables, incremental writes and SQLite FTS. The repository boundary keeps that change out of feature screens.
 
 ## Checks and release preparation
 
