@@ -1,11 +1,10 @@
-import { requireOptionalNativeModule, type NativeModule } from 'expo-modules-core';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
-export type DeviceHealthNative = NativeModule<{
-  onThermalChange: (event: unknown) => void;
-}> & {
+export interface DeviceHealthNative {
+  addListener(event: 'onThermalChange', listener: (event: unknown) => void): { remove(): void };
   start(): Promise<void>;
   stop(): Promise<void>;
   sample(): Promise<unknown>;
-};
+}
 
 export default requireOptionalNativeModule<DeviceHealthNative>('DeviceHealth');

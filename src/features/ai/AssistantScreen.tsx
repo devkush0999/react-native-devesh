@@ -9,6 +9,7 @@ import { AISetupCard } from './AISetupCard';
 import { engine } from './engine';
 import { assistantPrompt, systemPrompt, visibleAnswer, type AssistantMode } from './prompts';
 import { useAI } from './useAI';
+import { LiveHealthButton } from '../performance/PerformancePanel';
 
 export function AssistantScreen({
   initialMode = 'ask',
@@ -206,6 +207,7 @@ export function AssistantScreen({
           />
         )}
       </Card>
+      {working && <LiveHealthButton />}
       {!!error && <Notice error>{error}</Notice>}
       {(answer || working) && (
         <Card>

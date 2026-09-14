@@ -25,6 +25,7 @@ class PerformanceMonitor implements OperationObserver {
   private pendingSample: Promise<void> | null = null;
   private initialization: Promise<void> | null = null;
   private generation = 0;
+  private nativeStop: Promise<void> = Promise.resolve();
   private aiActive = false;
   private thermalStopped = false;
   private cancelAI: (() => void) | null = null;
@@ -51,12 +52,13 @@ class PerformanceMonitor implements OperationObserver {
     if (this.pendingSample) return this.pendingSample;
     if (!DeviceHealth || !this.state.recording) return;
     const generation = this.generation;
+    const phase = this.state.phase;
     this.pendingSample = (async () => {
       try {
         const reading = nativeReadingSchema.parse(await DeviceHealth.sample());
         if (generation !== this.generation || !this.state.recording) return;
         this.onHeat(reading);
-        const active = this.recorder.add(reading, delay);
+        const active = this.recorder.add(reading, delay, phase);
         this.update({ active, error: null });
       } catch {
         if (generation === this.generation) this.update({ error: 'A device reading failed. Gaps mean unavailable data, not zero usage. Thermal protection may also be unavailable.' });
@@ -67,22 +69,28 @@ class PerformanceMonitor implements OperationObserver {
 
   private schedule() {
     if (!this.state.recording) return;
+    const generation = this.generation;
     const due = performance.now() + SAMPLE_INTERVAL_MS;
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.sample(Math.max(0, performance.now() - due)).then(() => this.schedule());
+      void this.sample(Math.max(0, performance.now() - due)).then(() => { if (generation === this.generation) this.schedule(); });
     }, SAMPLE_INTERVAL_MS);
   }
 
   private async start(kind: PerformanceSession['kind']): Promise<void> {
-    if (!DeviceHealth || this.state.recording) return;
-    if (this.initialization) return this.initialization;
+    if (!DeviceHealth) return;
+    if (this.initialization) await this.initialization;
+    if (this.state.recording) return;
     const generation = ++this.generation;
     this.kind = kind;
+    this.thermalStopped = false;
     this.recorder.begin(randomUUID(), kind, new Date().toISOString());
     this.update({ recording: true, active: null, phase: 'baseline', error: null, thermalNotice: null });
     this.initialization = (async () => {
       try {
+        await this.nativeStop;
+        await this.pendingSample;
+        if (generation !== this.generation) return;
         await DeviceHealth.start();
         if (generation !== this.generation) return;
         this.thermalSubscription = DeviceHealth.addListener('onThermalChange', (event) => {
@@ -93,6 +101,7 @@ class PerformanceMonitor implements OperationObserver {
         await this.sample();
         if (generation === this.generation) this.schedule();
       } catch {
+        this.finish('error');
         this.update({ error: 'Device monitoring could not start. Rebuild the native app and retry.' });
       }
     })();
@@ -141,7 +150,7 @@ class PerformanceMonitor implements OperationObserver {
     const session = this.recorder.finish(this.thermalStopped ? 'thermal-stop' : outcome);
     this.update({ recording: false, active: null });
     if (session?.samples.length && store.getState().hydrated) store.dispatch(actions.savePerformanceSession(session));
-    void DeviceHealth?.stop().catch(() => {});
+    this.nativeStop = (this.initialization ?? Promise.resolve()).then(() => DeviceHealth?.stop()).catch(() => {});
   };
 
   stopAndSave = () => { this.cancelAI?.(); this.finish('manual'); };

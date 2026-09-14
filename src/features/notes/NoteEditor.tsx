@@ -16,6 +16,7 @@ import { Button, Card, Copy, Input, Notice, Pill, Sheet, layout } from '../../ui
 import { engine } from '../ai/engine';
 import { extractionPrompt, parseTaskDrafts, systemPrompt } from '../ai/prompts';
 import { useAI } from '../ai/useAI';
+import { LiveHealthButton } from '../performance/PerformancePanel';
 
 const example =
   'Tomorrow I need to send the project update to my team. Also buy groceries and call Mum this weekend. I have an idea for a small balcony garden.';
@@ -275,6 +276,7 @@ export function NoteEditor({ note, onClose }: { note?: Note; onClose: () => void
           )}
         </View>
       )}
+      {extracting && <LiveHealthButton />}
       {!!error && <Notice error>{error}</Notice>}
       <Button
         label={selected.length ? `Save note + ${selected.length} tasks` : 'Save thought'}

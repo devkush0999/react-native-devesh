@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Platform, ScrollView, Share, Switch, View } from 'react-native';
 import { MAX_PERFORMANCE_SESSIONS, SAMPLE_INTERVAL_MS, sessionSummary, thermalDescription, type PerformanceSession } from '../../domain/performance';
 import { actions, useAppDispatch, useAppSelector } from '../../store/store';
-import { Button, Card, Copy, Empty, Icon, Notice, Pill, layout } from '../../ui/components';
+import { Button, Card, Copy, Empty, Icon, Notice, Pill, Sheet, layout } from '../../ui/components';
 import { useTheme } from '../../ui/theme';
 import { elapsedLabel, metrics, type MetricKey } from './chart';
 import { PerformanceChart } from './PerformanceChart';
@@ -79,4 +79,9 @@ export function ThermalNotice() {
   const { thermalNotice } = usePerformanceMonitor();
   if (!thermalNotice) return null;
   return <View style={{ paddingHorizontal: 24 }}><Notice error>{thermalNotice}</Notice><Button label="Dismiss thermal notice" variant="ghost" onPress={performanceMonitor.dismissNotice} /></View>;
+}
+
+export function LiveHealthButton() {
+  const [open, setOpen] = useState(false);
+  return <><Button label="View live device health" icon="pulse-outline" variant="soft" onPress={() => setOpen(true)} /><Sheet visible={open} title="Device health" onClose={() => setOpen(false)}><PerformancePanel /></Sheet></>;
 }
