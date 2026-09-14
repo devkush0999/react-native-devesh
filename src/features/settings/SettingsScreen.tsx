@@ -14,6 +14,7 @@ import {
 } from '../../ui/components';
 import { useTheme } from '../../ui/theme';
 import { AISetupCard } from '../ai/AISetupCard';
+import { PerformancePanel } from '../performance/PerformancePanel';
 
 export function SettingsScreen() {
   const dispatch = useAppDispatch();
@@ -35,6 +36,8 @@ export function SettingsScreen() {
       </View>
       <Section title="Your on-device AI" />
       <AISetupCard />
+      <Section title="Device health & performance" />
+      <PerformancePanel />
       <Section title="A space that feels like you" />
       <Card>
         <Copy weight="600">Appearance</Copy>
@@ -104,7 +107,7 @@ export function SettingsScreen() {
         <Card>
           <Copy weight="600">Delete all your notes and tasks?</Copy>
           <Copy muted size={13}>
-            This clears your personal vault on this device. Model files and appearance preferences
+            This clears your notes, tasks and saved health recordings on this device. Model files and appearance preferences
             stay. Type DELETE to continue.
           </Copy>
           <Input

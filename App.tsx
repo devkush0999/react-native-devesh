@@ -5,7 +5,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import type { Note, Task } from './src/domain/models';
 import { hydrateVault, persistCurrent, store, useAppSelector } from './src/store/store';
-import { Button, Copy, Icon, Notice, type IconName, layout } from './src/ui/components';
+import { Button, Copy, Icon, Notice, Sheet, type IconName, layout } from './src/ui/components';
 import { ThemeProvider, useTheme } from './src/ui/theme';
 import { engine } from './src/features/ai/engine';
 import { useAI } from './src/features/ai/useAI';
@@ -17,6 +17,8 @@ import { TasksScreen } from './src/features/tasks/TasksScreen';
 import { AssistantScreen } from './src/features/ai/AssistantScreen';
 import type { AssistantMode } from './src/features/ai/prompts';
 import { SettingsScreen } from './src/features/settings/SettingsScreen';
+import { PerformancePanel, PerformanceShortcut, ThermalNotice } from './src/features/performance/PerformancePanel';
+import { performanceMonitor } from './src/features/performance/monitor';
 
 type Tab = 'today' | 'notes' | 'tasks' | 'assistant' | 'settings';
 const tabs: { key: Tab; label: string; icon: IconName; active: IconName }[] = [
@@ -38,15 +40,16 @@ function Shell() {
   const [taskEditor, setTaskEditor] = useState<{ task?: Task } | null>(null);
   const [assistantMode, setAssistantMode] = useState<AssistantMode>('ask');
   const [background, setBackground] = useState(false);
+  const [healthOpen, setHealthOpen] = useState(false);
   useEffect(() => {
     void hydrateVault();
     const subscription = AppState.addEventListener('change', (state) => {
       setBackground(state !== 'active');
-      if (state !== 'active') engine.cancel();
+      if (state !== 'active') performanceMonitor.background();
     });
     return () => {
       subscription.remove();
-      engine.cancel();
+      performanceMonitor.background();
     };
   }, []);
   const openNote = (note: Note) => setNoteEditor({ note });
@@ -68,7 +71,7 @@ function Shell() {
               saathi
             </Copy>
           </View>
-          <View style={[layout.row, { gap: 6 }]}>
+          <View style={[layout.row, { gap: 6 }]}><PerformanceShortcut onPress={() => setHealthOpen(true)} />
             <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green }} />
             <Copy size={9} weight="600" style={{ color: colors.green, letterSpacing: 1.2 }}>
               {Platform.OS === 'web'
@@ -101,7 +104,8 @@ function Shell() {
           </View>
         ) : (
           <>
-            {storageError && (
+            <ThermalNotice />
+          {storageError && (
               <View style={{ paddingHorizontal: 24, gap: 4 }}>
                 <Notice error>{storageError}</Notice>
                 <Button
@@ -132,9 +136,9 @@ function Shell() {
               {tab === 'tasks' && (
                 <TasksScreen onCreate={() => setTaskEditor({})} onEdit={openTask} />
               )}
-              {tab === 'assistant' && (
+              <View style={{ flex: 1, display: tab === 'assistant' ? 'flex' : 'none' }}>
                 <AssistantScreen initialMode={assistantMode} onOpenNote={openNote} />
-              )}
+              </View>
               {tab === 'settings' && <SettingsScreen />}
             </View>
             {saving && (
@@ -182,6 +186,7 @@ function Shell() {
           </>
         )}
       </View>
+      <Sheet visible={healthOpen} title="Device health" onClose={() => setHealthOpen(false)}><PerformancePanel /></Sheet>
       {noteEditor && <NoteEditor note={noteEditor.note} onClose={() => setNoteEditor(null)} />}
       {taskEditor && <TaskEditor task={taskEditor.task} onClose={() => setTaskEditor(null)} />}
       {background && Platform.OS !== 'web' && (

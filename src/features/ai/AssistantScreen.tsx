@@ -40,6 +40,8 @@ export function AssistantScreen({
     };
   }, []);
 
+  useEffect(() => { if (!working) setMode(initialMode); }, [initialMode]);
+
   async function run() {
     if (working) return;
     setError('');
