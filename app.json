@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.saathi.privateai",
+      "bundleIdentifier": "com.deveshrn.saathi",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": true
       }
@@ -43,6 +43,12 @@
     "web": {
       "name": "Saathi — a little less on your mind",
       "bundler": "metro"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "58a4cff4-25ba-4ccc-b712-15917b96daee"
+      }
+    },
+    "owner": "devesh-rn"
   }
 }
