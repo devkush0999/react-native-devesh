@@ -23,12 +23,20 @@ export interface OperationObserver {
   after(outcome: PerformanceOutcome): void;
 }
 
+export interface OperationContext {
+  signal: AbortSignal;
+  onCancel(stop: () => void): () => void;
+  phase(phase: PerformancePhase): void;
+  generate(system: string, prompt: string, onToken: (token: string) => void): Promise<string>;
+}
+
 export class LocalAIEngine {
   private state: AIState = { status: 'idle', progress: 0, available: false, error: null };
   private listeners = new Set<() => void>();
   private controller: AbortController | null = null;
   private session: Session | null = null;
   private busy = false;
+  private cancellationHandlers = new Set<() => void>();
 
   constructor(
     private adapter: AIAdapter,
@@ -87,29 +95,56 @@ export class LocalAIEngine {
     prompt: string,
     onToken: (token: string) => void,
   ): Promise<string> {
-    if (this.busy) throw new Error('AI is already working. Wait or stop the current request.');
     if (!this.state.available) throw new Error('Set up your on-device AI in Settings first.');
+    return this.runOperation('inference', (context) => context.generate(system, prompt, onToken));
+  }
+
+  /** One owner across text, microphone, speech models and audio playback. */
+  async runOperation<T>(
+    kind: OperationKind,
+    job: (context: OperationContext) => Promise<T>,
+  ): Promise<T> {
+    if (this.busy) throw new Error('AI is already working. Wait or stop the current request.');
     this.busy = true;
     const controller = new AbortController();
     this.controller = controller;
     this.update({ status: 'generating', error: null });
     let outcome: PerformanceOutcome = 'completed';
     try {
-      await this.observer?.before('inference');
+      await this.observer?.before(kind);
       if (controller.signal.aborted) throw new AIInterruptedError('Generation stopped.');
-      this.observer?.phase('loading');
-      this.session = await this.adapter.create(system);
-      if (controller.signal.aborted) throw new Error('Generation stopped.');
-      this.observer?.phase('generating');
-      const answer = await this.session.send(prompt, (token) => {
-        if (!controller.signal.aborted) onToken(token);
+      const answer = await job({
+        signal: controller.signal,
+        phase: (phase) => this.observer?.phase(phase),
+        onCancel: (stop) => {
+          if (controller.signal.aborted) stop();
+          else this.cancellationHandlers.add(stop);
+          return () => { this.cancellationHandlers.delete(stop); };
+        },
+        generate: async (system, prompt, onToken) => {
+          if (!this.state.available) throw new AIInterruptedError('Set up the text AI model in Settings first.');
+          if (controller.signal.aborted) throw new AIInterruptedError('Generation stopped.');
+          this.observer?.phase('loading');
+          this.session = await this.adapter.create(system);
+          try {
+            if (controller.signal.aborted) throw new AIInterruptedError('Generation stopped.');
+            this.observer?.phase('generating');
+            return await this.session.send(prompt, (token) => {
+              if (!controller.signal.aborted) onToken(token);
+            });
+          } finally {
+            this.observer?.phase('releasing');
+            this.session?.dispose();
+            this.session = null;
+          }
+        },
       });
       if (controller.signal.aborted) throw new Error('Generation stopped.');
       return answer;
     } catch (error) {
       outcome = controller.signal.aborted ? 'cancelled' : 'error';
       if (error instanceof AIInterruptedError) throw error;
-      if (controller.signal.aborted) throw new Error('Generation stopped. Nothing was saved.');
+      if (controller.signal.aborted) throw new Error('Operation stopped. Review any completed text before saving.');
       throw new Error(
         error instanceof Error && error.message === 'Generation stopped.'
           ? error.message
@@ -124,7 +159,8 @@ export class LocalAIEngine {
         this.session = null;
         this.controller = null;
         this.busy = false;
-        this.update({ status: 'ready' });
+        this.cancellationHandlers.clear();
+        this.update({ status: this.state.available ? 'ready' : 'idle' });
         this.observer?.after(controller.signal.aborted ? 'cancelled' : outcome);
       }
     }
@@ -133,5 +169,6 @@ export class LocalAIEngine {
   cancel = () => {
     this.controller?.abort();
     this.session?.stop();
+    this.cancellationHandlers.forEach((stop) => stop());
   };
 }

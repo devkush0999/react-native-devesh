@@ -10,6 +10,7 @@ import {
   type Task,
 } from '../domain/models';
 import { repository } from '../data/repository';
+import { MAX_VOICE_NOTES, voiceNoteSchema, type VoiceNote } from '../domain/voice';
 import {
   MAX_PERFORMANCE_SESSIONS,
   performanceSessionSchema,
@@ -25,6 +26,15 @@ const slice = createSlice({
     saving: false,
   },
   reducers: {
+    saveVoiceNote(state, action: PayloadAction<VoiceNote>) {
+      const note = voiceNoteSchema.parse(action.payload);
+      const index = state.data.voiceNotes.findIndex((item) => item.id === note.id);
+      if (index >= 0) state.data.voiceNotes[index] = note;
+      else if (state.data.voiceNotes.length < MAX_VOICE_NOTES) state.data.voiceNotes.unshift(note);
+    },
+    deleteVoiceNote(state, action: PayloadAction<string>) {
+      state.data.voiceNotes = state.data.voiceNotes.filter((note) => note.id !== action.payload);
+    },
     hydrate(state, action: PayloadAction<Snapshot>) {
       state.data = action.payload;
       state.hydrated = true;

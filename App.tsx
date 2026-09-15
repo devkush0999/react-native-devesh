@@ -14,7 +14,9 @@ import { NotesScreen } from './src/features/notes/NotesScreen';
 import { NoteEditor } from './src/features/notes/NoteEditor';
 import { TaskEditor } from './src/features/tasks/TaskEditor';
 import { TasksScreen } from './src/features/tasks/TasksScreen';
-import { AssistantScreen } from './src/features/ai/AssistantScreen';
+import { AssistantHub } from './src/features/ai/AssistantHub';
+import { VoiceShortcut } from './src/features/voice/VoiceScreen';
+import { voice } from './src/features/voice/service';
 import type { AssistantMode } from './src/features/ai/prompts';
 import { SettingsScreen } from './src/features/settings/SettingsScreen';
 import {
@@ -45,11 +47,13 @@ function Shell() {
   const [assistantMode, setAssistantMode] = useState<AssistantMode>('ask');
   const [background, setBackground] = useState(false);
   const [healthOpen, setHealthOpen] = useState(false);
+  const [voiceRequest, setVoiceRequest] = useState(0);
   useEffect(() => {
     void hydrateVault();
     const subscription = AppState.addEventListener('change', (state) => {
       setBackground(state !== 'active');
       if (state !== 'active') performanceMonitor.background();
+      if (state === 'background') voice.cancel();
     });
     return () => {
       subscription.remove();
@@ -82,6 +86,7 @@ function Shell() {
             ]}
           >
             <PerformanceShortcut onPress={() => setHealthOpen(true)} />
+            <VoiceShortcut onPress={() => { setTab('assistant'); setVoiceRequest((value) => value + 1); }} />
             <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green }} />
             <Copy size={9} weight="600" style={{ color: colors.green, letterSpacing: 1.2 }}>
               {Platform.OS === 'web'
@@ -147,7 +152,7 @@ function Shell() {
                 <TasksScreen onCreate={() => setTaskEditor({})} onEdit={openTask} />
               )}
               <View style={{ flex: 1, display: tab === 'assistant' ? 'flex' : 'none' }}>
-                <AssistantScreen initialMode={assistantMode} onOpenNote={openNote} />
+                <AssistantHub initialMode={assistantMode} onOpenNote={openNote} voiceRequest={voiceRequest} />
               </View>
               {tab === 'settings' && <SettingsScreen />}
             </View>

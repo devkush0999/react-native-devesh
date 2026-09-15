@@ -8,12 +8,15 @@ export const performancePhaseSchema = z.enum([
   'download',
   'loading',
   'generating',
+  'listening',
+  'transcribing',
+  'speaking',
   'releasing',
   'cooldown',
   'manual',
 ]);
 export type PerformancePhase = z.infer<typeof performancePhaseSchema>;
-export type OperationKind = 'setup' | 'inference';
+export type OperationKind = 'setup' | 'inference' | 'voice';
 export const outcomeSchema = z.enum([
   'completed',
   'cancelled',
@@ -68,7 +71,7 @@ export const performanceSessionSchema = z.object({
   id: z.string(),
   startedAt: z.string().datetime(),
   durationMs: z.number().nonnegative(),
-  kind: z.enum(['setup', 'inference', 'manual']),
+  kind: z.enum(['setup', 'inference', 'voice', 'manual']),
   outcome: outcomeSchema,
   platform: z.enum(['ios', 'android']),
   isPhysicalDevice: z.boolean(),

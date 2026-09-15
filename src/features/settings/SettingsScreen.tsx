@@ -15,6 +15,8 @@ import {
 import { useTheme } from '../../ui/theme';
 import { AISetupCard } from '../ai/AISetupCard';
 import { PerformancePanel } from '../performance/PerformancePanel';
+import { VoiceSetup } from '../voice/VoiceSetup';
+import { voice } from '../voice/service';
 
 export function SettingsScreen() {
   const dispatch = useAppDispatch();
@@ -36,6 +38,8 @@ export function SettingsScreen() {
       </View>
       <Section title="Your on-device AI" />
       <AISetupCard />
+      <Section title="Voice notes & read-aloud" />
+      <VoiceSetup />
       <Section title="Device health & performance" />
       <PerformancePanel />
       <Section title="A space that feels like you" />
@@ -86,7 +90,7 @@ export function SettingsScreen() {
         </Copy>
         <View style={[layout.between, { paddingTop: 10 }]}>
           <Copy size={13}>
-            {data.notes.length} thoughts · {data.tasks.length} tasks
+            {data.notes.length} thoughts · {data.tasks.length} tasks · {data.voiceNotes.length} transcripts
           </Copy>
           <Copy size={12} muted>
             {saving ? 'Saving…' : storageError ? 'Save failed' : 'Saved locally'}
@@ -107,7 +111,7 @@ export function SettingsScreen() {
         <Card>
           <Copy weight="600">Delete all your notes and tasks?</Copy>
           <Copy muted size={13}>
-            This clears your notes, tasks and saved health recordings on this device. Model files
+            This clears your notes, tasks, voice transcripts and saved health recordings on this device. Model files
             and appearance preferences stay. Type DELETE to continue.
           </Copy>
           <Input
@@ -122,6 +126,7 @@ export function SettingsScreen() {
             variant="danger"
             disabled={confirmation !== 'DELETE'}
             onPress={() => {
+              voice.clear();
               dispatch(actions.clearVault());
               setDeleting(false);
               setConfirmation('');

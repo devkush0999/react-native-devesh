@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MAX_PERFORMANCE_SESSIONS, performanceSessionSchema } from './performance';
+import { MAX_VOICE_NOTES, voiceNoteSchema } from './voice';
 
 export const MAX_NOTE_LENGTH = 3000;
 export const MAX_NOTES = 500;
@@ -55,6 +56,7 @@ export const snapshotSchema = z.object({
   tasks: z.array(taskSchema).max(MAX_TASKS),
   preferences: preferencesSchema,
   performanceSessions: z.array(performanceSessionSchema).max(MAX_PERFORMANCE_SESSIONS).default([]),
+  voiceNotes: z.array(voiceNoteSchema).max(MAX_VOICE_NOTES).default([]),
 });
 
 export type Note = z.infer<typeof noteSchema>;
@@ -70,6 +72,7 @@ export const emptySnapshot: Snapshot = {
   tasks: [],
   preferences: { theme: 'system', language: 'English', thermalProtection: true },
   performanceSessions: [],
+  voiceNotes: [],
 };
 
 export function isTodayTask(task: Task, today = localDate()): boolean {
