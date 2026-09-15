@@ -16,6 +16,10 @@ A private daily companion built with React Native, Expo and **react-native-execu
 
 No account, API key, cloud inference or subscription is required. Notes and manual tasks work before model setup. The first model download requires internet; cached model requests are designed to work offline.
 
+## Test on an iPhone
+
+Use the EAS **preview** build for an app that runs without Metro or a connected laptop. See [iPhone installation and first-test steps](docs/IPHONE-TESTING.md). The project is linked to `@devesh-rn/saathi-private-ai`, with internal signing configured for the registered iPhone.
+
 ## Run locally
 
 Use Node 24 LTS, npm, and Xcode/CocoaPods for iOS or the Android SDK/JDK for Android.
@@ -112,7 +116,7 @@ npx expo install --check
 npx expo export --platform web
 ```
 
-GitHub Actions runs type checks, tests, formatting and the browser build. `eas.json` contains development, internal preview and production profiles. Before EAS distribution, set your real application identifiers, configure signing and link your own Expo project. No deployment or external publishing was performed.
+GitHub Actions runs type checks, tests, formatting and the browser build. `eas.json` contains development, internal preview and production profiles. The linked Expo project has iOS internal-distribution signing configured. Use `eas build --platform ios --profile preview` for a standalone test build. App Store/TestFlight submission remains separate.
 
 Keep development and production application identifiers separate before real distribution. Regenerate native projects through Expo prebuild after changing native dependencies/plugins. Run the native build checks on both platforms in CI before store releases. Review App Store encryption/export-compliance requirements for the SQLCipher build; the app config declares non-exempt encryption instead of claiming an exemption.
 
@@ -122,6 +126,6 @@ Keep development and production application identifiers separate before real dis
 - **Security:** no note upload or application analytics. ExecuTorch download telemetry is disabled. Android backup is disabled; iOS encrypted data and key backup behavior requires a release test. Add an opt-in biometric lock and a deliberate encrypted export/recovery flow before treating the app as a long-term personal vault.
 - **Quality:** validate model output, keep task mutations behind review, cap context and fail explicitly. Add data migrations, component tests and a real navigation stack as scope grows. The Xcode toolchain's transitive `uuid` is overridden to a patched CommonJS-compatible 11.1.1; the tooling compatibility check is documented in `docs/RESEARCH.md`.
 - **Testing:** run the acceptance checklist in `docs/DEVICE-TESTS.md`, especially airplane-mode use, failed downloads, background cancellation, disk-full writes, process restarts and screen-reader/font scaling.
-- **Product:** notifications, voice transcription, OCR, cloud sync, semantic retrieval and backup export are not implemented. Tasks are planner entries; the app does not schedule reminder notifications. Hinglish is an AI response preference, not a fully localized interface.
+- **Product:** notifications, OCR, cloud sync, semantic retrieval and backup export are not implemented. Tasks are planner entries; the app does not schedule reminder notifications. Hinglish is an AI response preference, not a fully localized interface.
 
 See [research and version decisions](docs/RESEARCH.md) for the official sources and tradeoffs.
