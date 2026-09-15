@@ -86,7 +86,12 @@ function Shell() {
             ]}
           >
             <PerformanceShortcut onPress={() => setHealthOpen(true)} />
-            <VoiceShortcut onPress={() => { setTab('assistant'); setVoiceRequest((value) => value + 1); }} />
+            <VoiceShortcut
+              onPress={() => {
+                setTab('assistant');
+                setVoiceRequest((value) => value + 1);
+              }}
+            />
             <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.green }} />
             <Copy size={9} weight="600" style={{ color: colors.green, letterSpacing: 1.2 }}>
               {Platform.OS === 'web'
@@ -152,7 +157,11 @@ function Shell() {
                 <TasksScreen onCreate={() => setTaskEditor({})} onEdit={openTask} />
               )}
               <View style={{ flex: 1, display: tab === 'assistant' ? 'flex' : 'none' }}>
-                <AssistantHub initialMode={assistantMode} onOpenNote={openNote} voiceRequest={voiceRequest} />
+                <AssistantHub
+                  initialMode={assistantMode}
+                  onOpenNote={openNote}
+                  voiceRequest={voiceRequest}
+                />
               </View>
               {tab === 'settings' && <SettingsScreen />}
             </View>

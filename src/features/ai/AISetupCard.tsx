@@ -62,6 +62,7 @@ export function AISetupCard() {
         <Button
           label={ai.status === 'error' ? 'Retry AI setup' : 'Download / load private AI'}
           icon="download-outline"
+          disabled={ai.status === 'generating'}
           onPress={() => {
             void engine.prepare();
           }}

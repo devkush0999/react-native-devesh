@@ -4,4 +4,5 @@ package-lock.json
 /android
 .expo
 dist
+dist-voice
 artifacts

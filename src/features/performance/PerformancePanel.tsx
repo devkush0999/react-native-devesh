@@ -14,7 +14,12 @@ import { elapsedLabel, metrics, type MetricKey } from './chart';
 import { PerformanceChart } from './PerformanceChart';
 import { performanceMonitor, usePerformanceMonitor } from './monitor';
 
-const kindLabels = { setup: 'Model setup', inference: 'AI request', voice: 'Voice session', manual: 'Manual recording' };
+const kindLabels = {
+  setup: 'Model setup',
+  inference: 'AI request',
+  voice: 'Voice session',
+  manual: 'Manual recording',
+};
 function title(session: PerformanceSession) {
   return `${kindLabels[session.kind]} · ${new Date(session.startedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
 }

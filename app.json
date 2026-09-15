@@ -25,7 +25,10 @@
         {
           "iosMicrophonePermission": "Saathi uses your microphone when you start a voice note or voice assistant. Audio is processed on your device.",
           "iosBackgroundMode": false,
-          "androidPermissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"],
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO",
+            "android.permission.MODIFY_AUDIO_SETTINGS"
+          ],
           "androidForegroundService": false,
           "disableFFmpeg": true,
           "disableStaticExternalLibs": true

@@ -90,7 +90,8 @@ export function SettingsScreen() {
         </Copy>
         <View style={[layout.between, { paddingTop: 10 }]}>
           <Copy size={13}>
-            {data.notes.length} thoughts · {data.tasks.length} tasks · {data.voiceNotes.length} transcripts
+            {data.notes.length} thoughts · {data.tasks.length} tasks · {data.voiceNotes.length}{' '}
+            transcripts
           </Copy>
           <Copy size={12} muted>
             {saving ? 'Saving…' : storageError ? 'Save failed' : 'Saved locally'}
@@ -111,8 +112,8 @@ export function SettingsScreen() {
         <Card>
           <Copy weight="600">Delete all your notes and tasks?</Copy>
           <Copy muted size={13}>
-            This clears your notes, tasks, voice transcripts and saved health recordings on this device. Model files
-            and appearance preferences stay. Type DELETE to continue.
+            This clears your notes, tasks, voice transcripts and saved health recordings on this
+            device. Model files and appearance preferences stay. Type DELETE to continue.
           </Copy>
           <Input
             accessibilityLabel="Type DELETE to erase personal data"

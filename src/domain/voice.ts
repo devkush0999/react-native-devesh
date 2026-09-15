@@ -21,7 +21,10 @@ export type VoiceNote = z.infer<typeof voiceNoteSchema>;
 export function joinAudio(chunks: readonly Float32Array[]): Float32Array {
   const output = new Float32Array(chunks.reduce((sum, chunk) => sum + chunk.length, 0));
   let offset = 0;
-  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.length;
+  }
   return output;
 }
 
@@ -39,7 +42,8 @@ export function splitTranscript(text: string, limit = 2000): string[] {
       if (end > offset && /[\uD800-\uDBFF]/.test(text[end - 1]!)) end--;
     }
     if (end === offset) end = Math.min(text.length, offset + 2);
-    chunks.push(text.slice(offset, end)); offset = end;
+    chunks.push(text.slice(offset, end));
+    offset = end;
   }
   return chunks;
 }

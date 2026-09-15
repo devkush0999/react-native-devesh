@@ -119,10 +119,13 @@ export class LocalAIEngine {
         onCancel: (stop) => {
           if (controller.signal.aborted) stop();
           else this.cancellationHandlers.add(stop);
-          return () => { this.cancellationHandlers.delete(stop); };
+          return () => {
+            this.cancellationHandlers.delete(stop);
+          };
         },
         generate: async (system, prompt, onToken) => {
-          if (!this.state.available) throw new AIInterruptedError('Set up the text AI model in Settings first.');
+          if (!this.state.available)
+            throw new AIInterruptedError('Set up the text AI model in Settings first.');
           if (controller.signal.aborted) throw new AIInterruptedError('Generation stopped.');
           this.observer?.phase('loading');
           this.session = await this.adapter.create(system);
@@ -144,7 +147,8 @@ export class LocalAIEngine {
     } catch (error) {
       outcome = controller.signal.aborted ? 'cancelled' : 'error';
       if (error instanceof AIInterruptedError) throw error;
-      if (controller.signal.aborted) throw new Error('Operation stopped. Review any completed text before saving.');
+      if (controller.signal.aborted)
+        throw new Error('Operation stopped. Review any completed text before saving.');
       throw new Error(
         error instanceof Error && error.message === 'Generation stopped.'
           ? error.message

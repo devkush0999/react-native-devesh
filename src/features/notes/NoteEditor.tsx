@@ -17,6 +17,7 @@ import { engine } from '../ai/engine';
 import { extractionPrompt, parseTaskDrafts, systemPrompt } from '../ai/prompts';
 import { useAI } from '../ai/useAI';
 import { LiveHealthButton } from '../performance/PerformancePanel';
+import { TaskDraftReview } from '../tasks/TaskDraftReview';
 
 const example =
   'Tomorrow I need to send the project update to my team. Also buy groceries and call Mum this weekend. I have an idea for a small balcony garden.';
@@ -211,64 +212,7 @@ export function NoteEditor({ note, onClose }: { note?: Note; onClose: () => void
           <Copy weight="600">
             {drafts.length ? 'Review your suggested tasks' : 'No action items found'}
           </Copy>
-          {drafts.map((draft, index) => (
-            <Card key={index}>
-              <Pill
-                label={draft.selected ? '✓ Add this task' : 'Skip this task'}
-                active={draft.selected}
-                onPress={() =>
-                  setDrafts(
-                    (items) =>
-                      items?.map((item, i) =>
-                        i === index ? { ...item, selected: !item.selected } : item,
-                      ) ?? null,
-                  )
-                }
-              />
-              <Input
-                accessibilityLabel={`Suggested task ${index + 1}`}
-                value={draft.title}
-                maxLength={160}
-                onChangeText={(value) =>
-                  setDrafts(
-                    (items) =>
-                      items?.map((item, i) => (i === index ? { ...item, title: value } : item)) ??
-                      null,
-                  )
-                }
-              />
-              <Input
-                accessibilityLabel={`Suggested date ${index + 1}`}
-                value={draft.dueDate ?? ''}
-                placeholder="YYYY-MM-DD (optional)"
-                maxLength={10}
-                onChangeText={(value) =>
-                  setDrafts(
-                    (items) =>
-                      items?.map((item, i) =>
-                        i === index ? { ...item, dueDate: value || null } : item,
-                      ) ?? null,
-                  )
-                }
-              />
-              <View style={layout.wrap}>
-                {(['low', 'medium', 'high'] as const).map((priority) => (
-                  <Pill
-                    key={priority}
-                    label={priority}
-                    active={draft.priority === priority}
-                    onPress={() =>
-                      setDrafts(
-                        (items) =>
-                          items?.map((item, i) => (i === index ? { ...item, priority } : item)) ??
-                          null,
-                      )
-                    }
-                  />
-                ))}
-              </View>
-            </Card>
-          ))}
+          <TaskDraftReview drafts={drafts} onChange={setDrafts} />
           {!!drafts.length && (
             <Copy muted size={12}>
               Check dates and priorities. AI can make mistakes.

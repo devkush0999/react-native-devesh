@@ -9,6 +9,7 @@ A private daily companion built with React Native, Expo and **react-native-execu
 - AI task extraction: a real native ExecuTorch integration, strict JSON validation, editable suggestions and explicit save.
 - Ask your notes: local keyword retrieval selects up to four supporting notes for the model. Sources are visible. This is **keyword retrieval**, not semantic search.
 - Daily planning from open tasks and short text rewriting, with streaming responses and cancellation.
+- Voice studio: English/Hindi transcription, live dictation, meeting summaries/action review, offline read-aloud, speech detection and a tap-to-talk voice assistant. See [setup and limits](docs/VOICE.md).
 - Device Health Monitor: automatic CPU/RAM/battery/thermal graphs during AI, manual baselines, session history and OS thermal cancellation. See [metric definitions and usage](docs/DEVICE-HEALTH.md).
 - English/Hinglish AI preference, system/light/dark appearance, accessible controls and tablet width constraints.
 - Native SQLCipher encrypted storage with a random key held by SecureStore. Browser preview uses unencrypted localStorage and says so in the interface.
@@ -48,18 +49,20 @@ The preview can save notes and tasks in this browser. AI is explicitly unavailab
 2. Allow roughly 0.5–0.8 GB for the quantized Qwen3 model and tokenizer; exact upstream artifact size can vary. Keep at least 2 GB storage free as development headroom. Test on phones with 4 GB+ RAM; this is a starting recommendation, not a measured guarantee.
 3. Save a note such as: “Tomorrow send the project update. Buy groceries. My project review is on Friday.”
 4. Open the note, choose **Find action items**, review titles/dates/priorities, then save the selected tasks.
-5. Open **Saathi AI → Ask my notes** and ask about “project review”. Or choose **Plan my day** once tasks exist.
+5. Open **Saathi AI → Text assistant → Ask my notes** and ask about “project review”. Or choose **Plan my day** once tasks exist.
+
+For voice, load the desired packs in **Settings → Voice notes & read-aloud**, then open **Saathi AI → Voice studio**. The [35-feature roadmap](docs/FEATURE-ROADMAP.md) tracks the requested sequential rollout; the selected first batch is voice (#15–20).
 
 Setup is opt-in on each app launch; subsequent setup resolves cached files. It does not intentionally redownload existing model weights. Generation starts a fresh session per request and disposes it afterward, trading some loading latency for bounded memory and no lingering conversation context.
 
 ## Verified here
 
 - TypeScript strict checks.
-- 30 automated tests for dates, persisted schema validation, task ordering, output parsing, note retrieval, cancellation, concurrency and safe native disposal.
+- 49 automated tests for dates, persisted schema validation, task ordering, output parsing, note retrieval, bounded audio, cancellation, concurrency and safe native disposal.
 - Expo SDK dependency compatibility check.
 - Production iOS, Android and web JavaScript exports.
-- Health dialog visually inspected in the browser; mobile sensor recording is disabled there.
-- iOS development build compiled and installed successfully on an iPhone 17 Pro simulator, including the local Swift Device Health module and native SVG charts, with the iOS JS bundle produced by Metro.
+- Health dialog and voice capture/read-aloud controls visually inspected in the browser; native audio/sensor controls are disabled there.
+- Voice-enabled iOS development build compiled with 0 errors and installed on the iPhone 17 Pro simulator, including RNAudioAPI, the ExecuTorch phonemizer and Device Health module. An Expo build-script warning remains.
 
 Native model download/inference, native vault runtime behavior and mobile UI interaction **have not been end-to-end verified**. Simulator UI access was not permitted in this session. The Android SDK was not available, so an Android build has not been run. Treat the app as a working implementation that still needs device acceptance testing, not a store-ready release.
 
@@ -75,6 +78,7 @@ src/
     notes/            Notebook and thought editor
     tasks/            Planner and task editor
     ai/               Prompts, retrieval, output parser and native lifecycle
+    voice/            Audio capture, VAD/STT/TTS, meeting workflows and transcript history
     performance/      Native recording, thermal guard, graphs and session history
     settings/         Model setup, preferences and local data controls
   ui/                 Theme, accessible primitives and date refresh
@@ -98,7 +102,7 @@ flowchart LR
 
 Redux Toolkit manages serializable notes/tasks/preferences. Native sessions, AbortControllers and downloaded resource handles stay outside Redux. A sequential write queue prevents older saves from overwriting newer changes and exposes failures with a retry path. Saga/React Query would add little value to this local, single-request workflow; introduce them when actual asynchronous orchestration or server state appears.
 
-The initial repository stores a versioned bounded snapshot (500 notes / 1,000 tasks / 12 health sessions) in one encrypted SQLite row. For larger datasets, migrate to normalized tables, incremental writes and SQLite FTS. The repository boundary keeps that change out of feature screens.
+The initial repository stores a versioned bounded snapshot (500 notes / 1,000 tasks / 50 voice transcripts / 12 health sessions) in one encrypted SQLite row. For larger datasets, migrate to normalized tables, incremental writes and SQLite FTS. The repository boundary keeps that change out of feature screens.
 
 ## Checks and release preparation
 
